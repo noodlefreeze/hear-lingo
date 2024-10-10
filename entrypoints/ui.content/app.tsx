@@ -65,16 +65,37 @@ function Subtitles(props: SubtitlesProps) {
   const videoEl = videoRef.current!
   const [currentTime, setCurrentTime] = useState(0)
   const [isSubtitlesPanelOpen, setIsSubtitlesPanelOpen] = useState(videoEl.paused)
+  const subtitlesRef = useRef<HTMLDivElement | null>(null)
 
-  const currentSubtitleIntoView = useCallback(() => {
+  const scrollCurrentSubtitleIntoView = useCallback(() => {
+    const subtitlesEl = subtitlesRef.current
 
+    if (subtitlesEl) {
+      for (const child of subtitlesEl.children) {
+        const start = (child as HTMLDivElement).dataset.start
+        const dur = (child as HTMLDivElement).dataset.dur
+
+        if (Number.isFinite(Number.parseFloat(start ?? '')) && Number.isFinite(Number.parseFloat(dur ?? ''))) {
+          const s = Number.parseFloat(start as string)
+          const d = Number.parseFloat(dur as string)
+
+          // the subtitle currently playing
+          if (videoEl.currentTime >= s && videoEl.currentTime < s + d) {
+            child.scrollIntoView({
+              block: 'nearest',
+              behavior: 'smooth',
+            })
+            break
+          }
+        }
+      }
+    }
   }, [])
 
   const toggleSubtitlesPanel = useCallback(() => {
     if (videoEl.played && !isSubtitlesPanelOpen) {
       videoEl.pause()
       setIsSubtitlesPanelOpen(true)
-      currentSubtitleIntoView()
     }
     else {
       setIsSubtitlesPanelOpen(!isSubtitlesPanelOpen)
@@ -87,8 +108,8 @@ function Subtitles(props: SubtitlesProps) {
       return
 
     const clickedEl = e.target as HTMLElement
-    const targetEl = clickedEl.closest('[data-start]') as HTMLElement
-    const start = Number.parseFloat(targetEl.getAttribute('data-start') as string)
+    const targetEl = clickedEl.closest('data-start') as HTMLElement
+    const start = Number.parseFloat(targetEl.dataset.start as string)
 
     videoEl.currentTime = start
     setCurrentTime(start)
@@ -103,7 +124,6 @@ function Subtitles(props: SubtitlesProps) {
     }
     function openPanel() {
       setIsSubtitlesPanelOpen(true)
-      currentSubtitleIntoView()
     }
 
     videoEl.addEventListener('timeupdate', updateCurrentTime)
@@ -116,6 +136,12 @@ function Subtitles(props: SubtitlesProps) {
       videoEl.removeEventListener('pause', openPanel)
     }
   }, [])
+
+  useEffect(() => {
+    if (isSubtitlesPanelOpen && videoEl.paused) {
+      scrollCurrentSubtitleIntoView()
+    }
+  }, [isSubtitlesPanelOpen, currentTime])
 
   return (
     <Fragment>
@@ -131,8 +157,12 @@ function Subtitles(props: SubtitlesProps) {
         }
       </button>
       <div
-        className={bcls('space-y-2 transition-all duration-300 ease-in-out overflow-auto p-4 pr-0', isSubtitlesPanelOpen ? 'h-80' : 'h-0 py-0')}
+        className={bcls(
+          'space-y-2 transition-all duration-300 ease-in-out overflow-auto p-4 pr-0',
+          isSubtitlesPanelOpen ? 'h-80' : 'h-0 py-0',
+        )}
         onClick={handleSubtitleClick}
+        ref={subtitlesRef}
       >
         {subtitles.map((subtitle) => {
           const currentPlay = currentTime >= subtitle.start && currentTime < subtitle.start + subtitle.dur
@@ -141,13 +171,20 @@ function Subtitles(props: SubtitlesProps) {
             <div
               key={subtitle.start}
               data-start={subtitle.start}
+              data-dur={subtitle.dur}
               className={bcls(
                 'flex items-center space-x-2 p-2',
                 currentPlay ? 'bg-yellow-100' : 'bg-gray-100',
                 'rounded-lg group transition duration-300 ease-in-out hover:bg-gray-200 cursor-default',
               )}
             >
-              <p dangerouslySetInnerHTML={{ __html: subtitle.content ?? '' }} className={bcls('flex-grow text-base', currentPlay && 'font-medium')} />
+              <p
+                dangerouslySetInnerHTML={{ __html: subtitle.content ?? '' }}
+                className={bcls(
+                  'flex-grow text-base',
+                  currentPlay && 'font-medium',
+                )}
+              />
               <span className="text-xs text-gray-500 whitespace-nowrap">{formatSecondsToMMSS(subtitle.start)}</span>
             </div>
           )
