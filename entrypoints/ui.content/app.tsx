@@ -143,7 +143,7 @@ function Subtitles(props: SubtitlesProps) {
       return
 
     const clickedEl = e.target as HTMLElement
-    const targetEl = clickedEl.closest('data-start') as HTMLElement
+    const targetEl = clickedEl.closest('[data-start]') as HTMLElement
     const start = Number.parseFloat(targetEl.dataset.start as string)
 
     videoEl.currentTime = start
