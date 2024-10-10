@@ -1,7 +1,8 @@
+import type { ChangeEvent, MouseEvent } from 'react'
 import type { ContentScriptContext } from 'wxt/client'
 import type { Caption, Subtitle } from './fetchers'
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import { Fragment, type MouseEvent } from 'react'
+import { ChevronDown, ChevronUp, Globe } from 'lucide-react'
+import { Fragment } from 'react'
 import useSWR from 'swr'
 import { fetchCurrentVideoCaptions, fetchSubtitles } from './fetchers'
 import { bcls, formatSecondsToMMSS, isValidYouTubeUrl } from './tools'
@@ -13,13 +14,16 @@ interface AppProps {
 
 export function App({ ctx }: AppProps) {
   const captions = useSWR('hear-lingo-captions', fetchCurrentVideoCaptions)
+  // TODO perhaps there is a better way to define the key of subtitles
+  const subtitles = useSWR(() => {
+    let caption: Caption | null = null
 
-  let caption: Caption | null = null
-  if (captions.data && captions.data.length) {
-    caption = captions.data.find(c => c.languageCode === 'en') ?? captions.data[0]
-  }
+    if (captions.data && captions.data.length) {
+      caption = captions.data.find(c => c.languageCode === 'en') ?? captions.data[0]
+    }
 
-  const subtitles = useSWR(() => caption ? caption.baseUrl : null, fetchSubtitles)
+    return caption ? caption.baseUrl : null
+  }, fetchSubtitles)
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
@@ -45,12 +49,43 @@ export function App({ ctx }: AppProps) {
     )
   }
 
+  function handleLanguageChange(e: ChangeEvent<HTMLSelectElement>) {
+    subtitles.mutate(fetchSubtitles(e.target.value as string), {
+      revalidate: false,
+    })
+  }
+
   return (
-    <div className="bg-gray-100 p-4 mb-4">
-      <div>header</div>
-      <section className="bg-white rounded-lg shadow-lg">
-        {subtitles.data ? <Subtitles subtitles={subtitles.data} videoRef={videoRef} /> : null}
-      </section>
+    <div className="bg-gray-100 p-4 mb-4 rounded-lg shadow-lg">
+      <div className="rounded-lg bg-white">
+        <section className="bg-gradient-to-r from-blue-500 rounded-t-lg to-blue-600 p-4 text-white transition-colors duration-300">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-bold">Hear Lingo</h1>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <select
+                  onChange={handleLanguageChange}
+                  className="appearance-none bg-white bg-opacity-20 border border-white border-opacity-30 text-white rounded-md py-1 pl-8 pr-6 text-sm leading-tight focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition duration-300"
+                  defaultValue={captions.data?.find(c => c.languageCode === 'en')?.baseUrl ?? captions.data?.[0]?.baseUrl}
+                >
+                  {captions.data!.map(caption => (
+                    <option value={caption.baseUrl} key={caption.name.simpleText}>{caption.name.simpleText}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-white">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-white">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          {subtitles.data ? <Subtitles subtitles={subtitles.data} videoRef={videoRef} /> : null}
+        </section>
+      </div>
     </div>
   )
 }
