@@ -17,11 +17,11 @@
     "lint:fix": "eslint entrypoints --fix"
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.10",
     "lucide-react": "^0.451.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "swr": "^2.2.5",
-    "zustand": "5.0.0-rc.2"
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.7.3",

@@ -1,11 +1,12 @@
 import type { ChangeEvent, MouseEvent } from 'react'
 import type { ContentScriptContext } from 'wxt/client'
 import type { Caption, Subtitle } from './fetchers'
-import { ChevronDown, ChevronUp, Globe } from 'lucide-react'
+import { Popover, PopoverButton, PopoverPanel, Transition } from '@headlessui/react'
+import { ChevronDown, ChevronUp, Globe, Repeat } from 'lucide-react'
 import { Fragment } from 'react'
 import useSWR from 'swr'
 import { fetchCurrentVideoCaptions, fetchSubtitles } from './fetchers'
-import { bcls, formatSecondsToMMSS, isValidYouTubeUrl } from './tools'
+import { bcls, formatMMSSToSeconds, formatSecondsToMMSS, isValidYouTubeUrl } from './tools'
 import '~/assets/tailwind.css'
 
 interface AppProps {
@@ -82,11 +83,185 @@ export function App({ ctx }: AppProps) {
             </div>
           </div>
         </section>
+        <Controller videoRef={videoRef} />
         <section>
           {subtitles.data ? <Subtitles subtitles={subtitles.data} videoRef={videoRef} /> : null}
         </section>
       </div>
     </div>
+  )
+}
+
+interface ControllerProps {
+  videoRef: React.RefObject<HTMLVideoElement>
+}
+
+function Controller(props: ControllerProps) {
+  const { videoRef } = props
+
+  return (
+    <section className="p-4 border-b border-gray-200 transition-colors duration-300">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div className="flex space-x-2">
+          <LoopControl videoRef={videoRef} />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+interface LoopControlProps {
+  videoRef: React.RefObject<HTMLVideoElement>
+}
+
+function LoopControl(props: LoopControlProps) {
+  const { videoRef } = props
+  const videoEl = videoRef.current as HTMLVideoElement
+  const [isLooping, setIsLooping] = useState(false)
+  const [loopRange, setLoopRange] = useState({ start: '', end: '' })
+
+  function handleLoopRangeSubmit(e: ChangeEvent<HTMLFormElement>) {
+    e.preventDefault()
+
+    const target = e.target as HTMLFormElement
+    const data = new FormData(target)
+    const loopStart = data.get('start') as string
+    const loopEnd = data.get('end') as string
+
+    if (!loopStart && !loopEnd)
+      return
+
+    const re = /^\d+$|^\d+:\d+$/
+    const result = { start: '', end: '' }
+
+    if (re.test(loopStart))
+      result.start = formatMMSSToSeconds(loopStart)
+    if (re.test(loopEnd))
+      result.end = formatMMSSToSeconds(loopEnd)
+    setLoopRange(result)
+    if (!isLooping)
+      setIsLooping(true)
+  }
+
+  useEffect(() => {
+    function checkEndpointTime() {
+      const currentTime = videoEl.currentTime
+      const start = Number.parseFloat(loopRange.start)
+      const end = Number.parseFloat(loopRange.end)
+
+      if (Number.isFinite(start) && currentTime < start) {
+        videoEl.currentTime = start
+      }
+      else if (Number.isFinite(end) && currentTime > end) {
+        videoEl.currentTime = start
+      }
+    }
+
+    if (isLooping) {
+      videoEl.addEventListener('timeupdate', checkEndpointTime)
+    }
+
+    return () => {
+      videoEl.removeEventListener('timeupdate', checkEndpointTime)
+    }
+  }, [isLooping])
+
+  return (
+    <Popover>
+      {({ open }) => (
+        <Fragment>
+          <PopoverButton
+            className={bcls(
+              'flex items-center px-4 py-2 rounded-md text-sm font-medium transition duration-300',
+              (open || isLooping) ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300',
+            )}
+          >
+            <Repeat className="w-4 h-4 mr-2" />
+            Loop
+          </PopoverButton>
+          <Transition
+            enter="transition duration-100 ease-out"
+            enterFrom="transform scale-95 opacity-0"
+            enterTo="transform scale-100 opacity-100"
+            leave="transition duration-75 ease-out"
+            leaveFrom="transform scale-100 opacity-100"
+            leaveTo="transform scale-95 opacity-0"
+          >
+            <PopoverPanel
+              className="absolute z-[3000] mt-2 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            >
+              <div className="p-4">
+                <h3
+                  className="text-lg font-semibold mb-2 text-gray-900"
+                >
+                  Loop Control
+                </h3>
+                <p className="text-sm mb-4 text-gray-600 whitespace-nowrap">Enter loop start and end times in SS or MM:SS:</p>
+                <form onSubmit={handleLoopRangeSubmit}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="relative">
+                      <label
+                        htmlFor="start"
+                        className="absolute -top-2 left-2 inline-block bg-white px-1 text-sm font-medium text-gray-900"
+                      >
+                        Start
+                      </label>
+                      <input
+                        id="start"
+                        name="start"
+                        type="text"
+                        placeholder="12:34"
+                        className="w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 transition-colors duration-300"
+                        data-endpoint="start"
+                        autoComplete="off"
+                        defaultValue={formatSecondsToMMSS(Number.parseFloat(loopRange.start))}
+                      />
+                    </div>
+                    <div className="relative">
+                      <label
+                        htmlFor="end"
+                        className="absolute -top-2 left-2 inline-block bg-white px-1 text-sm font-medium text-gray-900"
+                      >
+                        End
+                      </label>
+                      <input
+                        id="end"
+                        name="end"
+                        type="text"
+                        placeholder="5678"
+                        className="w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 transition-colors duration-300"
+                        data-endpoint="end"
+                        autoComplete="off"
+                        defaultValue={formatSecondsToMMSS(Number.parseFloat(loopRange.end))}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      className="flex-1 flex items-center justify-center text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300 bg-green-500 hover:bg-green-600"
+                    >
+                      {isLooping ? 'Update' : 'Start Loop'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsLooping(false)}
+                      className={bcls(
+                        'flex-1 flex items-center justify-center',
+                        'text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300',
+                        isLooping ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600',
+                      )}
+                    >
+                      Stop Loop
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </PopoverPanel>
+          </Transition>
+        </Fragment>
+      )}
+    </Popover>
   )
 }
 
@@ -127,7 +302,7 @@ function Subtitles(props: SubtitlesProps) {
     }
   }, [])
 
-  const toggleSubtitlesPanel = useCallback(() => {
+  function toggleSubtitlesPanel() {
     if (videoEl.played && !isSubtitlesPanelOpen) {
       videoEl.pause()
       setIsSubtitlesPanelOpen(true)
@@ -135,7 +310,7 @@ function Subtitles(props: SubtitlesProps) {
     else {
       setIsSubtitlesPanelOpen(!isSubtitlesPanelOpen)
     }
-  }, [isSubtitlesPanelOpen])
+  }
 
   function handleSubtitleClick(e: MouseEvent<HTMLTableSectionElement>) {
     // if the white space is clicked, do nothing
@@ -193,7 +368,7 @@ function Subtitles(props: SubtitlesProps) {
       </button>
       <div
         className={bcls(
-          'space-y-2 transition-all duration-300 ease-in-out overflow-auto p-4 pr-0',
+          'space-y-2 transition-all duration-300 ease-in-out overflow-auto p-4',
           isSubtitlesPanelOpen ? 'h-80' : 'h-0 py-0',
         )}
         onClick={handleSubtitleClick}

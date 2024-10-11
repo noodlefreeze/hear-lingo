@@ -27,7 +27,10 @@ export function bcls(...parts: Part[]): string {
   return parts.filter(Boolean).join(' ')
 }
 
-export function formatSecondsToMMSS(seconds: number) {
+export function formatSecondsToMMSS(seconds: number, defaultValue = undefined) {
+  if (!Number.isFinite(seconds))
+    return defaultValue
+
   const minutes = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
 
@@ -37,4 +40,14 @@ export function formatSecondsToMMSS(seconds: number) {
   ].join(':')
 
   return formattedTime
+}
+
+export function formatMMSSToSeconds(time: string) {
+  if (!time.includes(':'))
+    return time
+
+  const [m, s] = time.split(':')
+  const ms = Number.parseFloat(m) * 60
+
+  return (ms + Number.parseFloat(s)).toString()
 }

@@ -12,6 +12,7 @@ export default defineContentScript({
     const ui = await createShadowRootUi(ctx, {
       name: 'hear-lingo-ui',
       position: 'inline',
+      isolateEvents: true,
       append(_, ui) {
         waitForElementLoaded('#page-manager #columns.ytd-watch-flexy #secondary #secondary-inner', (rootEl) => {
           rootEl.prepend(ui)
