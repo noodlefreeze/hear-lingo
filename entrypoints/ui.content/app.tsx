@@ -138,9 +138,11 @@ function LoopControl(props: LoopControlProps) {
       result.start = formatMMSSToSeconds(loopStart)
     if (re.test(loopEnd))
       result.end = formatMMSSToSeconds(loopEnd)
-    setLoopRange(result)
-    if (!isLooping)
-      setIsLooping(true)
+    if (result.start < result.end) {
+      setLoopRange(result)
+      if (!isLooping)
+        setIsLooping(true)
+    }
   }
 
   useEffect(() => {
@@ -149,10 +151,7 @@ function LoopControl(props: LoopControlProps) {
       const start = Number.parseFloat(loopRange.start)
       const end = Number.parseFloat(loopRange.end)
 
-      if (Number.isFinite(start) && currentTime < start) {
-        videoEl.currentTime = start
-      }
-      else if (Number.isFinite(end) && currentTime > end) {
+      if ((Number.isFinite(start) && currentTime < start) || (Number.isFinite(end) && currentTime > end)) {
         videoEl.currentTime = start
       }
     }
@@ -245,12 +244,9 @@ function LoopControl(props: LoopControlProps) {
                     </button>
                     <button
                       type="button"
+                      disabled={!isLooping}
                       onClick={() => setIsLooping(false)}
-                      className={bcls(
-                        'flex-1 flex items-center justify-center',
-                        'text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300',
-                        isLooping ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600',
-                      )}
+                      className="disabled:opacity-50 flex-1 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300"
                     >
                       Stop Loop
                     </button>
