@@ -1,8 +1,7 @@
 {
-  "name": "wxt-react-starter",
+  "name": "hear-lingo",
   "type": "module",
   "version": "0.1.0",
-  "private": true,
   "description": "A browser extension for YouTube that helps you learn languages by listening to them.",
   "scripts": {
     "dev": "wxt",
