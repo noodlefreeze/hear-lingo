@@ -164,7 +164,7 @@ function LoopControl(props: LoopControlProps) {
     return () => {
       videoEl.removeEventListener('timeupdate', checkEndpointTime)
     }
-  }, [isLooping])
+  }, [isLooping, loopRange])
 
   return (
     <Popover>
@@ -341,7 +341,7 @@ function Subtitles(props: SubtitlesProps) {
     if (isSubtitlesPanelOpen && videoEl.paused) {
       scrollCurrentSubtitleIntoView()
     }
-  }, [isSubtitlesPanelOpen])
+  }, [isSubtitlesPanelOpen, currentTime])
 
   return (
     <Fragment>
