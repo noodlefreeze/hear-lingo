@@ -341,7 +341,7 @@ function Subtitles(props: SubtitlesProps) {
     if (isSubtitlesPanelOpen && videoEl.paused) {
       scrollCurrentSubtitleIntoView()
     }
-  }, [isSubtitlesPanelOpen, currentTime])
+  }, [isSubtitlesPanelOpen])
 
   return (
     <Fragment>
