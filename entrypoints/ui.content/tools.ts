@@ -51,3 +51,32 @@ export function formatMMSSToSeconds(time: string) {
 
   return (ms + Number.parseFloat(s)).toString()
 }
+
+export function findCurrentSubtitle(collection: HTMLCollection, currentTime: number) {
+  let left = 0
+  let right = collection.length - 1
+
+  while (left <= right) {
+    const mid = left + Math.floor((right - left) / 2)
+    const el = collection[mid] as HTMLDivElement
+    const start = el.dataset.start
+    const dur = el.dataset.dur
+
+    if (Number.isFinite(Number.parseFloat(start ?? '')) && Number.isFinite(Number.parseFloat(dur ?? ''))) {
+      const s = Number.parseFloat(start as string)
+      const d = Number.parseFloat(dur as string)
+
+      if (currentTime >= s && currentTime < s + d) {
+        return el
+      }
+      else if (s < currentTime) {
+        left = mid + 1
+      }
+      else {
+        right = mid - 1
+      }
+    }
+  }
+
+  return null
+}

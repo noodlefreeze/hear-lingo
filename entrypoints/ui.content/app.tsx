@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, Globe, Repeat } from 'lucide-react'
 import { Fragment } from 'react'
 import useSWR from 'swr'
 import { fetchCurrentVideoCaptions, fetchSubtitles } from './fetchers'
-import { bcls, formatMMSSToSeconds, formatSecondsToMMSS, isValidYouTubeUrl } from './tools'
+import { bcls, findCurrentSubtitle, formatMMSSToSeconds, formatSecondsToMMSS, isValidYouTubeUrl } from './tools'
 import '~/assets/tailwind.css'
 
 interface AppProps {
@@ -281,23 +281,13 @@ function Subtitles(props: SubtitlesProps) {
     const subtitlesEl = subtitlesRef.current
 
     if (subtitlesEl) {
-      for (const child of subtitlesEl.children) {
-        const start = (child as HTMLDivElement).dataset.start
-        const dur = (child as HTMLDivElement).dataset.dur
+      const targetEl = findCurrentSubtitle(subtitlesEl.children, videoEl.currentTime)
 
-        if (Number.isFinite(Number.parseFloat(start ?? '')) && Number.isFinite(Number.parseFloat(dur ?? ''))) {
-          const s = Number.parseFloat(start as string)
-          const d = Number.parseFloat(dur as string)
-
-          // the subtitle currently playing
-          if (videoEl.currentTime >= s && videoEl.currentTime < s + d) {
-            child.scrollIntoView({
-              block: 'nearest',
-              behavior: 'smooth',
-            })
-            break
-          }
-        }
+      if (targetEl) {
+        targetEl.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth',
+        })
       }
     }
   }, [])
