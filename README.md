@@ -1,1 +1,4 @@
-TODO: 二分查找 scrollCurrentSubtitleIntoView 函数
+## TODO
+
+[ ] popup page
+[ ] e2e test

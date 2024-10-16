@@ -61,10 +61,11 @@ export function App({ ctx }: AppProps) {
       <div className="rounded-lg bg-white">
         <section className="bg-gradient-to-r from-blue-500 rounded-t-lg to-blue-600 p-4 text-white transition-colors duration-300">
           <div className="flex justify-between items-center">
-            <h1 className="text-xl font-bold">Hear Lingo</h1>
+            <h1 data-testid="title" className="text-xl font-bold">Hear Lingo</h1>
             <div className="flex items-center space-x-2">
               <div className="relative">
                 <select
+                  data-testid="language-selector"
                   onChange={handleLanguageChange}
                   className="appearance-none bg-white bg-opacity-20 border border-white border-opacity-30 text-white rounded-md py-1 pl-8 pr-6 text-sm leading-tight focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition duration-300"
                   defaultValue={captions.data?.find(c => c.languageCode === 'en')?.baseUrl ?? captions.data?.[0]?.baseUrl}
@@ -170,6 +171,7 @@ function LoopControl(props: LoopControlProps) {
       {({ open }) => (
         <Fragment>
           <PopoverButton
+            data-testid="loop-button"
             className={bcls(
               'flex items-center px-4 py-2 rounded-md text-sm font-medium transition duration-300',
               (open || isLooping) ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300',
@@ -209,6 +211,7 @@ function LoopControl(props: LoopControlProps) {
                         id="start"
                         name="start"
                         type="text"
+                        data-testid="start"
                         placeholder="12:34"
                         className="w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 transition-colors duration-300"
                         data-endpoint="start"
@@ -227,6 +230,7 @@ function LoopControl(props: LoopControlProps) {
                         id="end"
                         name="end"
                         type="text"
+                        data-testid="end"
                         placeholder="5678"
                         className="w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 transition-colors duration-300"
                         data-endpoint="end"
@@ -353,6 +357,7 @@ function Subtitles(props: SubtitlesProps) {
         }
       </button>
       <div
+        data-testid="subtitles-panel"
         className={bcls(
           'space-y-2 transition-all duration-300 ease-in-out overflow-auto p-4',
           isSubtitlesPanelOpen ? 'h-80' : 'h-0 py-0',
@@ -376,6 +381,7 @@ function Subtitles(props: SubtitlesProps) {
             >
               <p
                 dangerouslySetInnerHTML={{ __html: subtitle.content ?? '' }}
+                data-testid="subtitle"
                 className={bcls(
                   'flex-grow text-base',
                   currentPlay && 'font-medium',

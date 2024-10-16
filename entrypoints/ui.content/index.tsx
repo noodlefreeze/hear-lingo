@@ -20,6 +20,9 @@ export default defineContentScript({
       },
       onMount(uiContainer) {
         const rootEl = document.createElement('div')
+
+        rootEl.id = '#hear-lingo-app'
+
         const root = ReactDOM.createRoot(rootEl)
 
         uiContainer.prepend(rootEl)

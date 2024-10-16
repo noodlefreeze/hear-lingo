@@ -13,10 +13,12 @@
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
     "lint": "eslint entrypoints",
-    "lint:fix": "eslint entrypoints --fix"
+    "lint:fix": "eslint entrypoints --fix",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@headlessui/react": "^2.1.10",
+    "@playwright/test": "^1.48.0",
     "lucide-react": "^0.451.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
